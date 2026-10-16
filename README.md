@@ -1,6 +1,6 @@
 # Shiftwell Swap Rules: prototype
 
-**Live demo:** https://abhiready.github.io/shiftwell-swap-rules/
+**Live demo:** https://abhiready.github.io/shiftwell-swap-rules/main.html
 
 A working prototype built for a product case study. Shiftwell (a fictional company) sells shift-scheduling software to restaurants, clinics, retail stores and gyms.
 
