@@ -1,0 +1,1 @@
+# shiftwell-swap-rules
