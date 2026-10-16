@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shiftwell Swap Rules: prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#17323A; --paper:#F7F9F8; --surface:#FFFFFF; --line:#D6E0DD; --muted:#5A6E73;
+  --primary:#1F6F78; --primary-ink:#FFFFFF;
+  --pass:#2E7D52; --pass-bg:#E6F3EB; --route:#9A6210; --route-bg:#FBF0DC; --block:#A8352F; --block-bg:#F9E4E2;
+  --focus:#1F6F78;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#E3ECEA; --paper:#0F1B1E; --surface:#16262A; --line:#2A3E43; --muted:#9AB0B4;
+    --primary:#4FB3BD; --primary-ink:#0F1B1E;
+    --pass:#6CCB94; --pass-bg:#173527; --route:#E7B65A; --route-bg:#3A2C10; --block:#F08A82; --block-bg:#3D1C1A;
+    --focus:#4FB3BD; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#E3ECEA; --paper:#0F1B1E; --surface:#16262A; --line:#2A3E43; --muted:#9AB0B4;
+  --primary:#4FB3BD; --primary-ink:#0F1B1E;
+  --pass:#6CCB94; --pass-bg:#173527; --route:#E7B65A; --route-bg:#3A2C10; --block:#F08A82; --block-bg:#3D1C1A;
+  --focus:#4FB3BD; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 20px 48px}
+header h1{font-size:clamp(24px,3.4vw,34px);line-height:1.15;margin:0 0 8px;font-weight:700;letter-spacing:-0.01em;max-width:24ch}
+header p{margin:0;color:var(--muted);max-width:68ch}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:24px 0 16px}
+.tabs button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+h2{font-size:17px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+.rule{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.rule:first-of-type{border-top:0}
+.rule label{flex:1}
+.rule small{display:block;color:var(--muted);font-size:12.5px}
+input[type=checkbox]{width:18px;height:18px;margin-top:2px;accent-color:var(--primary)}
+select,input[type=number]{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+input[type=number]{width:70px}
+.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.field{margin-bottom:12px}
+.field>span{display:block;font-weight:600;font-size:13px;margin-bottom:4px}
+.field select{width:100%}
+.btn{font:inherit;font-weight:600;background:var(--primary);color:var(--primary-ink);border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--primary);border:1px solid var(--line)}
+.decision{margin-top:16px;border-radius:10px;border:1px solid var(--line);overflow:hidden}
+.verdict{padding:14px 16px;font-weight:700;font-size:18px}
+.verdict small{display:block;font-weight:500;font-size:13.5px;margin-top:2px}
+.v-pass{background:var(--pass-bg);color:var(--pass)}
+.v-route{background:var(--route-bg);color:var(--route)}
+.v-block{background:var(--block-bg);color:var(--block)}
+.checks{list-style:none;margin:0;padding:6px 16px 12px}
+.checks li{display:grid;grid-template-columns:24px 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.checks li:first-child{border-top:0}
+.mark{font-weight:700;text-align:center}
+.ok{color:var(--pass)} .warn{color:var(--route)} .bad{color:var(--block)} .off{color:var(--muted)}
+.checks b{display:block;font-size:14px}
+.checks span{color:var(--muted);font-size:13px}
+.roster{width:100%;border-collapse:collapse;font-size:13.5px}
+.roster th,.roster td{text-align:left;padding:7px 8px;border-top:1px solid var(--line);vertical-align:top}
+.roster th{font-weight:600;color:var(--muted);border-top:0}
+.scroll{overflow-x:auto}
+.tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);margin:1px 3px 1px 0;white-space:nowrap}
+.tag.exp{border-color:var(--block);color:var(--block)}
+.full{margin-top:20px}
+.bar{display:flex;height:28px;border-radius:6px;overflow:hidden;margin:12px 0 8px;border:1px solid var(--line)}
+.bar div{height:100%}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:12px}
+.stat strong{display:block;font-size:22px}
+.stat span{font-size:13px;color:var(--muted)}
+.log{list-style:none;padding:0;margin:0;font-size:13.5px}
+.log li{padding:8px 0;border-top:1px solid var(--line)}
+.log li:first-child{border-top:0}
+.empty{color:var(--muted);font-size:13.5px}
+footer{margin-top:28px;color:var(--muted);font-size:12.5px;max-width:80ch}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Swap rules: approve safe swaps instantly, send the rest to a person</h1>
+  <p>Today every shift swap waits for a Location Manager. This prototype checks each swap against rules an Admin sets: is the colleague trained for the role, are their certificates valid, and will the swap push them past the weekly hours limit. Swaps that pass every check are approved on the spot.</p>
+  <p class="note">Prototype for the Shiftwell case study. Staff, shifts and the replayed month are sample data, not customer data.</p>
+</header>
+
+<div class="tabs" role="group" aria-label="Customer">
+  <button data-acct="FreshBowl" aria-pressed="true">FreshBowl (restaurants)</button>
+  <button data-acct="CarePoint" aria-pressed="false">CarePoint Clinics</button>
+  <button data-acct="UrbanMart" aria-pressed="false">UrbanMart (retail)</button>
+</div>
+
+<div class="grid">
+  <section class="panel" aria-labelledby="rules-h">
+    <h2 id="rules-h">Rules for this customer</h2>
+    <p class="sub">Set once by the Admin. Applies to every swap at every location.</p>
+    <div class="rule"><input type="checkbox" id="r-auto"><label for="r-auto"><b>Auto-approve swaps that pass every check</b><small>Turn off to see how Shiftwell works today: every swap waits for a manager.</small></label></div>
+    <div class="rule"><input type="checkbox" id="r-role"><label for="r-role"><b>Colleague must be trained for the role or station</b><small>If not, the swap goes to the Location Manager.</small></label></div>
+    <div class="rule"><input type="checkbox" id="r-cert"><label for="r-cert"><b>Required certificates must be valid on the shift date</b><small>If any has expired, the swap is blocked. Managers cannot override this.</small></label></div>
+    <div class="rule"><input type="checkbox" id="r-hours"><label for="r-hours"><b>Weekly hours limit</b><small>Checked against the colleague's hours that week, including this shift.</small>
+      <span class="inline">Limit <input type="number" id="r-limit" min="20" max="80" step="1" aria-label="Weekly hours limit"> hrs, then
+        <select id="r-action" aria-label="When the limit is exceeded"><option value="route">send to approver</option><option value="block">block the swap</option></select></span>
+      <span class="inline">Approver <select id="r-approver" aria-label="Approver"><option>Location Manager</option><option>Regional Manager</option></select></span>
+    </label></div>
+  </section>
+
+  <section class="panel" aria-labelledby="check-h">
+    <h2 id="check-h">Check a swap request</h2>
+    <p class="sub">Pick a shift someone wants to give away and the colleague taking it.</p>
+    <label class="field"><span>Shift to give away</span><select id="s-shift"></select></label>
+    <label class="field"><span>Colleague taking it</span><select id="s-taker"></select></label>
+    <button class="btn" id="s-run">Check swap</button>
+    <div id="decision" aria-live="polite"></div>
+  </section>
+</div>
+
+<section class="panel full" aria-labelledby="roster-h">
+  <h2 id="roster-h">Staff this week</h2>
+  <p class="sub" id="roster-sub"></p>
+  <div class="scroll"><table class="roster"><thead><tr><th>Staff</th><th>Trained for</th><th>Certificates (expiry)</th><th>Hours this week</th></tr></thead><tbody id="roster"></tbody></table></div>
+</section>
+
+<section class="panel full" aria-labelledby="sim-h">
+  <h2 id="sim-h">Replay a month of swaps with these rules</h2>
+  <p class="sub" id="sim-sub"></p>
+  <button class="btn ghost" id="sim-run">Replay 300 sample swaps</button>
+  <div id="sim"></div>
+</section>
+
+<section class="panel full" aria-labelledby="log-h">
+  <h2 id="log-h">Decision log</h2>
+  <p class="sub">Every decision is recorded with its reason, so a compliance auditor can see why a swap was allowed.</p>
+  <ul class="log" id="log"><li class="empty">No swaps checked yet. Check one above.</li></ul>
+</section>
+
+<footer>Assumptions in this prototype: a manual approval takes a manager about 2 minutes; monthly swap volumes come from the September 2026 data pack; the week shown is Mon 19 to Sun 25 Oct 2026.</footer>
+</div>
+
+<script>
+const WEEK_END = "2026-10-25";
+const ACCOUNTS = {
+  FreshBowl:{ volume:2900, fast:38, location:"FreshBowl, Jubilee Hills",
+    rules:{auto:true, role:true, cert:true, hours:true, limit:48, action:"route", approver:"Location Manager"},
+    certsFor:{"Grill":["Food handler certificate"],"Tandoor":["Food handler certificate"],"Cashier":[]},
+    staff:[
+      {n:"Ravi K.", roles:["Grill","Tandoor"], certs:{"Food handler certificate":"2027-05-10"}, hrs:34},
+      {n:"Sana M.", roles:["Grill"], certs:{"Food handler certificate":"2027-01-20"}, hrs:30},
+      {n:"Arjun P.", roles:["Tandoor","Grill"], certs:{"Food handler certificate":"2026-10-31"}, hrs:30},
+      {n:"Meena R.", roles:["Cashier"], certs:{}, hrs:32},
+      {n:"Imran S.", roles:["Grill","Cashier"], certs:{"Food handler certificate":"2027-08-02"}, hrs:44},
+      {n:"Divya T.", roles:["Cashier","Grill"], certs:{"Food handler certificate":"2027-02-14"}, hrs:28}],
+    shifts:[
+      {owner:"Sana M.", day:"Fri 23 Oct", date:"2026-10-23", role:"Grill", h:9},
+      {owner:"Ravi K.", day:"Sat 24 Oct", date:"2026-10-24", role:"Tandoor", h:8},
+      {owner:"Meena R.", day:"Thu 22 Oct", date:"2026-10-22", role:"Cashier", h:6},
+      {owner:"Divya T.", day:"Sun 25 Oct", date:"2026-10-25", role:"Grill", h:8}]},
+  CarePoint:{ volume:310, fast:71, location:"CarePoint, Madhapur clinic",
+    rules:{auto:true, role:true, cert:true, hours:true, limit:48, action:"route", approver:"Location Manager"},
+    certsFor:{"Nurse":["BLS","Nursing council registration"],"Front desk":[]},
+    staff:[
+      {n:"Lakshmi N.", roles:["Nurse"], certs:{"BLS":"2027-04-30","Nursing council registration":"2028-01-31"}, hrs:36},
+      {n:"Joseph A.", roles:["Nurse"], certs:{"BLS":"2026-10-02","Nursing council registration":"2027-12-31"}, hrs:30},
+      {n:"Fatima Z.", roles:["Nurse"], certs:{"BLS":"2027-02-15","Nursing council registration":"2026-12-31"}, hrs:44},
+      {n:"Kiran B.", roles:["Front desk"], certs:{}, hrs:36},
+      {n:"Priya V.", roles:["Nurse","Front desk"], certs:{"BLS":"2027-06-01","Nursing council registration":"2027-09-30"}, hrs:24}],
+    shifts:[
+      {owner:"Lakshmi N.", day:"Wed 21 Oct", date:"2026-10-21", role:"Nurse", h:8},
+      {owner:"Priya V.", day:"Sat 24 Oct", date:"2026-10-24", role:"Nurse", h:12},
+      {owner:"Kiran B.", day:"Fri 23 Oct", date:"2026-10-23", role:"Front desk", h:8}]},
+  UrbanMart:{ volume:3100, fast:64, location:"UrbanMart, Kukatpally store",
+    rules:{auto:true, role:true, cert:false, hours:true, limit:48, action:"route", approver:"Regional Manager"},
+    certsFor:{"Store associate":[],"Cashier":[],"Stockroom":[]},
+    staff:[
+      {n:"Naveen G.", roles:["Store associate","Cashier"], certs:{}, hrs:36},
+      {n:"Rekha D.", roles:["Cashier"], certs:{}, hrs:32},
+      {n:"Suresh L.", roles:["Stockroom","Store associate"], certs:{}, hrs:44},
+      {n:"Anjali C.", roles:["Store associate"], certs:{}, hrs:30},
+      {n:"Farhan Q.", roles:["Stockroom","Cashier"], certs:{}, hrs:34}],
+    shifts:[
+      {owner:"Anjali C.", day:"Sat 24 Oct", date:"2026-10-24", role:"Store associate", h:9},
+      {owner:"Rekha D.", day:"Sun 25 Oct", date:"2026-10-25", role:"Cashier", h:8},
+      {owner:"Farhan Q.", day:"Fri 23 Oct", date:"2026-10-23", role:"Stockroom", h:8}]}
+};
+let acct = "FreshBowl"; const log = [];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = d => new Date(d+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+
+function rules(){ return {auto:$("r-auto").checked, role:$("r-role").checked, cert:$("r-cert").checked, hours:$("r-hours").checked,
+  limit:Number($("r-limit").value)||48, action:$("r-action").value, approver:$("r-approver").value}; }
+
+function decide(A, R, shift, taker){
+  const checks = []; let outcome = "pass";
+  const worse = o => { const rank={pass:0,route:1,block:2}; if(rank[o]>rank[outcome]) outcome=o; };
+  // Role / station
+  if(R.role){
+    const ok = taker.roles.includes(shift.role);
+    checks.push({s: ok?"ok":"warn", t:"Trained for "+shift.role, d: ok? taker.n+" is trained for this role." : taker.n+" is not trained for "+shift.role+". A manager should decide."});
+    if(!ok) worse("route");
+  } else checks.push({s:"off", t:"Role check", d:"Turned off for this customer."});
+  // Certificates
+  const need = A.certsFor[shift.role] || [];
+  if(R.cert && need.length){
+    const bad = need.filter(c => !taker.certs[c] || taker.certs[c] < shift.date);
+    checks.push({s: bad.length?"bad":"ok", t:"Certificates valid on "+shift.day,
+      d: bad.length ? bad.map(c => taker.certs[c] ? c+" expired on "+fmt(taker.certs[c]) : "No "+c+" on file").join("; ")+"." : need.join(" and ")+" valid on the shift date."});
+    if(bad.length) worse("block");
+  } else checks.push({s:"off", t:"Certificates", d: R.cert ? "No certificate needed for "+shift.role+"." : "Turned off for this customer."});
+  // Weekly hours
+  if(R.hours){
+    const after = taker.hrs + shift.h; const over = after > R.limit;
+    checks.push({s: over?(R.action==="block"?"bad":"warn"):"ok", t:"Weekly hours: "+after+" of "+R.limit,
+      d: over ? "Takes "+taker.n+" "+(after-R.limit)+" hrs past the limit. "+(R.action==="block"?"Blocked by rule.":"Needs "+R.approver+" approval.") : "Stays within the weekly limit."});
+    if(over) worse(R.action==="block"?"block":"route");
+  } else checks.push({s:"off", t:"Weekly hours", d:"Turned off for this customer."});
+  if(!R.auto && outcome==="pass") outcome = "manual";
+  return {outcome, checks};
+}
+
+const VERDICT = {
+  pass:{c:"v-pass", t:"Approved automatically", s:"Both staff are notified now. No manager action needed."},
+  route:{c:"v-route", t:"Sent for approval", s:""},
+  block:{c:"v-block", t:"Blocked", s:"The original shift owner keeps the shift and is told why."},
+  manual:{c:"v-route", t:"Waiting for Location Manager", s:"Auto-approval is off, so this swap waits for a manager, as it does today."}
+};
+const MARK = {ok:"✓", warn:"!", bad:"✕", off:"–"};
+
+function render(){
+  const A = ACCOUNTS[acct];
+  $("s-shift").innerHTML = A.shifts.map((s,i)=>`<option value="${i}">${esc(s.owner)}: ${esc(s.role)}, ${esc(s.day)} (${s.h} hrs)</option>`).join("");
+  renderTakers();
+  $("roster-sub").textContent = A.location+". Hours are already scheduled for the week ending "+fmt(WEEK_END)+".";
+  $("roster").innerHTML = A.staff.map(p=>{
+    const certs = Object.entries(p.certs).map(([c,d])=>`<span class="tag ${d<"2026-10-19"?"exp":""}">${esc(c)}: ${fmt(d)}${d<"2026-10-19"?" (expired)":""}</span>`).join("") || '<span class="empty">None needed</span>';
+    return `<tr><td>${esc(p.n)}</td><td>${p.roles.map(r=>`<span class="tag">${esc(r)}</span>`).join("")}</td><td>${certs}</td><td>${p.hrs}</td></tr>`;}).join("");
+  $("sim-sub").textContent = `${acct} handles about ${A.volume.toLocaleString("en-IN")} swaps a month, and only ${A.fast}% are approved within 24 hours today. See how many would still need a person under the rules on the left.`;
+  $("decision").innerHTML = ""; $("sim").innerHTML = "";
+}
+function renderTakers(){
+  const A = ACCOUNTS[acct]; const sh = A.shifts[$("s-shift").value||0];
+  $("s-taker").innerHTML = A.staff.filter(p=>p.n!==sh.owner).map(p=>`<option>${esc(p.n)}</option>`).join("");
+}
+function loadRules(){
+  const r = ACCOUNTS[acct].rules;
+  $("r-auto").checked=r.auto; $("r-role").checked=r.role; $("r-cert").checked=r.cert; $("r-hours").checked=r.hours;
+  $("r-limit").value=r.limit; $("r-action").value=r.action; $("r-approver").value=r.approver;
+}
+function check(){
+  const A = ACCOUNTS[acct], R = rules();
+  const shift = A.shifts[$("s-shift").value]; const taker = A.staff.find(p=>p.n===$("s-taker").value);
+  const {outcome, checks} = decide(A,R,shift,taker); const v = VERDICT[outcome];
+  const sub = outcome==="route" ? "Goes to the "+R.approver+" with the reason below, instead of every swap going to them." : v.s;
+  $("decision").innerHTML = `<div class="decision"><div class="verdict ${v.c}">${v.t}<small>${esc(sub)}</small></div>
+    <ul class="checks">${checks.map(c=>`<li><span class="mark ${c.s}" aria-hidden="true">${MARK[c.s]}</span><div><b>${esc(c.t)}</b><span>${esc(c.d)}</span></div></li>`).join("")}</ul></div>`;
+  const reason = checks.filter(c=>c.s==="bad"||c.s==="warn").map(c=>c.d).join(" ") || "All checks passed.";
+  log.unshift(`${acct}: ${shift.owner} → ${taker.n}, ${shift.role} on ${shift.day}. <b>${v.t}.</b> ${esc(reason)}`);
+  $("log").innerHTML = log.slice(0,12).map(l=>`<li>${l}</li>`).join("");
+}
+// Seeded random so every replay is repeatable
+function rng(seed){ return ()=>{ seed=(seed*1664525+1013904223)%4294967296; return seed/4294967296; }; }
+function simulate(){
+  const A = ACCOUNTS[acct], R = rules(), rand = rng(42); const tally={pass:0,route:0,block:0,manual:0}; const N=300;
+  for(let i=0;i<N;i++){
+    const owner = A.staff[Math.floor(rand()*A.staff.length)];
+    const role = owner.roles[Math.floor(rand()*owner.roles.length)];
+    // Most staff pick a colleague who already works that role, as the FreshBowl line cook described
+    let pool = A.staff.filter(p=>p.n!==owner.n && (rand()<0.85 ? p.roles.includes(role) : true));
+    if(!pool.length) pool = A.staff.filter(p=>p.n!==owner.n);
+    const taker = {...pool[Math.floor(rand()*pool.length)]};
+    taker.hrs = Math.max(0, taker.hrs + Math.round((rand()-0.6)*12));
+    const h = [6,8,8,9,12][Math.floor(rand()*5)];
+    const day = 19+Math.floor(rand()*7); const date = "2026-10-"+day;
+    tally[decide(A,R,{role,date,day:day+" Oct",h},taker).outcome]++;
+  }
+  const pct = k => Math.round(tally[k]/N*100);
+  const needPerson = tally.route + tally.manual;
+  const monthly = Math.round(A.volume * needPerson / N);
+  const hoursSaved = Math.round((A.volume - monthly) * 2 / 60);
+  $("sim").innerHTML = `<div class="bar" role="img" aria-label="${pct("pass")}% approved automatically, ${pct("route")+pct("manual")}% need a person, ${pct("block")}% blocked">
+      <div style="width:${pct("pass")}%;background:var(--pass)"></div><div style="width:${pct("route")+pct("manual")}%;background:var(--route)"></div><div style="width:${pct("block")}%;background:var(--block)"></div></div>
+    <div class="legend"><span><i style="background:var(--pass)"></i>Approved automatically ${pct("pass")}%</span><span><i style="background:var(--route)"></i>Needs a person ${pct("route")+pct("manual")}%</span><span><i style="background:var(--block)"></i>Blocked ${pct("block")}%</span></div>
+    <div class="stats">
+      <div class="stat"><strong>${monthly.toLocaleString("en-IN")}</strong><span>swaps a month that still need a person, down from ${A.volume.toLocaleString("en-IN")}</span></div>
+      <div class="stat"><strong>${hoursSaved.toLocaleString("en-IN")} hrs</strong><span>of manager time freed each month across ${acct}, at 2 minutes per approval</span></div>
+      <div class="stat"><strong>${tally.block}</strong><span>unsafe swaps stopped before they reach the roster</span></div>
+    </div>`;
+}
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  acct=b.dataset.acct; document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-pressed",x===b)); loadRules(); render();
+}));
+$("s-shift").addEventListener("change",()=>{renderTakers(); $("decision").innerHTML="";});
+$("s-run").addEventListener("click",check);
+$("sim-run").addEventListener("click",simulate);
+["r-auto","r-role","r-cert","r-hours","r-limit","r-action","r-approver"].forEach(id=>$(id).addEventListener("change",()=>{ if($("decision").innerHTML) check(); if($("sim").innerHTML) simulate(); }));
+loadRules(); render();
+</script>
+</body>
+</html>
