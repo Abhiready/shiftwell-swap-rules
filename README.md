@@ -4,6 +4,8 @@
 
 A working prototype built for a product case study. Shiftwell (a fictional company) sells shift-scheduling software to restaurants, clinics, retail stores and gyms.
 
+![Overview](overview.png)
+
 ## The problem
 
 Three customers asked for three different features:
@@ -26,25 +28,27 @@ Instead of three one-off features, every swap is checked against rules the custo
 
 If every check passes, the swap is **approved instantly**.
 
-![Overview](screenshots/overview.png)
+| Sent for approval (overtime) | Blocked (expired certificate) |
+|---|---|
+| ![Sent for approval](sent-for-approval.png) | ![Blocked](blocked.png) |
+
+## Result
+
+Replaying a month of FreshBowl swaps through the rules:
+
+| Today: every swap waits for a manager | With rules: 73% approved instantly |
+|---|---|
+| ![Today](replay-today.png) | ![With rules](replay.png) |
+
+Manual approvals drop from about **2,900 to about 700 a month**.
 
 ## What you can try
 
 1. **Switch customers:** FreshBowl, CarePoint and UrbanMart each have their own rules.
 2. **Check a swap:** pick a shift and a colleague to see the decision and the reason for each check.
-3. **Turn off auto-approval:** see how Shiftwell works today, with every swap waiting for a manager.
-4. **Replay a month:** run 300 sample swaps through the rules to see how many still need a person.
+3. **Turn off auto-approval:** see how Shiftwell works today.
+4. **Replay a month:** run 300 sample swaps through the rules.
 5. **Decision log:** every decision is recorded with its reason, for compliance audits.
-
-| Sent for approval | Blocked |
-|---|---|
-| ![Sent for approval](screenshots/sent-for-approval.png) | ![Blocked](screenshots/blocked.png) |
-
-![Replay a month](screenshots/replay.png)
-
-## Result
-
-At FreshBowl, about **73% of swaps are approved automatically**, cutting manual approvals from about 2,900 to about 700 a month.
 
 ## Notes
 
@@ -62,6 +66,6 @@ At FreshBowl, about **73% of swaps are approved automatically**, cutting manual 
 
 ## Built with
 
-HTML, CSS and JavaScript in a single page, with no backend. Built with help from Claude (Anthropic) for the prototype code; the analysis and product decisions were tested and verified by me.
+HTML, CSS and JavaScript in a single page, hosted on GitHub Pages. Built with help from Claude (Anthropic) for the prototype code; the analysis and product decisions were tested and verified by me.
 
 **Author:** Abhishek Reddy · [GitHub](https://github.com/Abhiready) · [LinkedIn](https://www.linkedin.com/in/abhishek-reddy-pm/)
